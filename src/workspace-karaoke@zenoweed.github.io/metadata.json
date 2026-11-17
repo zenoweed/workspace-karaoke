@@ -1,0 +1,10 @@
+{
+  "uuid": "workspace-karaoke@zenoweed.github.io",
+  "name": "Workspace Karaoke",
+  "description": "Shows synced lyrics for the song playing in any MPRIS media player (browser, Spotify, etc.) on your desktop. The artist and title of the current track are sent to lrclib.net to look up lyrics.",
+  "shell-version": [
+    "46"
+  ],
+  "url": "https://github.com/zenoweed/workspace-karaoke",
+  "settings-schema": "org.gnome.shell.extensions.workspace-karaoke"
+}

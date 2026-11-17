@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.workspace-karaoke" path="/org/gnome/shell/extensions/workspace-karaoke/">
+    <key name="show-lyrics" type="b">
+      <default>true</default>
+      <summary>Show the lyrics overlay</summary>
+    </key>
+    <key name="corner" type="s">
+      <choices>
+        <choice value="top-left"/>
+        <choice value="top-right"/>
+        <choice value="bottom-left"/>
+        <choice value="bottom-right"/>
+      </choices>
+      <default>'top-right'</default>
+      <summary>Screen corner the lyrics are anchored to</summary>
+    </key>
+    <key name="x-offset" type="i">
+      <range min="0" max="4000"/>
+      <default>240</default>
+      <summary>Distance in pixels from the left or right edge</summary>
+    </key>
+    <key name="y-offset" type="i">
+      <range min="0" max="4000"/>
+      <default>60</default>
+      <summary>Distance in pixels from the top or bottom edge</summary>
+    </key>
+    <key name="title-filters" type="as">
+      <default>['\\(.*?\\)', '\\[.*?\\]', 'official', 'video', 'music', 'lyrics', 'lyric', 'vevo', 'hd', '4k', 'remastered', 'remaster', 'audio']</default>
+      <summary>Removed from track titles before looking up lyrics</summary>
+      <description>A plain word matches whole words only; anything else is a case-insensitive regular expression.</description>
+    </key>
+  </schema>
+</schemalist>

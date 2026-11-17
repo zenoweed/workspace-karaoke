@@ -1,6 +1,0 @@
-{
-  "name": "Lyrics Overlay",
-  "description": "Displays /tmp/lyrics.txt on screen",
-  "uuid": "lyrics@local",
-  "shell-version": ["45", "46", "47", "48"]
-}
