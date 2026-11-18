@@ -1,13 +1,15 @@
+import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
+import Shell from 'gi://Shell';
 import Soup from 'gi://Soup?version=3.0';
 import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import {QuickToggle, SystemIndicator} from 'resource:///org/gnome/shell/ui/quickSettings.js';
 
-import {compileFilters, currentLines, parseLrc, parseTitle} from './lyrics.js';
+import {backgroundCss, compileFilters, currentLines, parseLrc, parseTitle} from './lyrics.js';
 
 Gio._promisify(Gio.DBusConnection.prototype, 'call');
 Gio._promisify(Soup.Session.prototype, 'send_and_read_async');
@@ -37,12 +39,12 @@ export default class KaraokeExtension extends Extension {
         this._track = null;
         this._clock = {elapsed: 0, last: GLib.get_monotonic_time()};
 
-        this._label = new St.Label({
-            style: `color: white; font-size: 10px; font-family: monospace; width: ${WIDTH}px;`,
-            reactive: false,
-        });
+        // Background, padding and blur live on the box: Shell.BlurEffect in BACKGROUND
+        // mode does nothing when attached straight to an St.Label.
+        this._label = new St.Label({x_expand: true, x_align: Clutter.ActorAlign.FILL});
         this._label.clutter_text.line_wrap = true;
-        Main.uiGroup.add_child(this._label);
+        this._box = new St.Bin({child: this._label, reactive: false});
+        Main.uiGroup.add_child(this._box);
 
         this._settings = this.getSettings();
         this._settingsId = this._settings.connect('changed', (_s, key) => {
@@ -50,10 +52,13 @@ export default class KaraokeExtension extends Extension {
                 this._loadFilters();
             else if (key === 'show-lyrics')
                 this._applyVisibility();
+            else if (['background-color', 'background-opacity', 'blur-radius', 'text-outline'].includes(key))
+                this._applyStyle();
             else
                 this._place();
         });
         this._loadFilters();
+        this._applyStyle();
         this._monitorsId = Main.layoutManager.connect('monitors-changed', () => this._place());
         this._place();
 
@@ -75,18 +80,16 @@ export default class KaraokeExtension extends Extension {
         Main.layoutManager.disconnect(this._monitorsId);
         this._settings.disconnect(this._settingsId);
         this._session.abort();
-        this._label.destroy();
-        this._label = this._session = this._cancellable = this._track = this._clock = this._settings = this._filters = null;
+        this._box.destroy();
+        this._box = this._label = this._session = this._cancellable = this._track = this._clock = this._settings = this._filters = this._blur = null;
         this._timeoutId = this._monitorsId = this._settingsId = 0;
     }
 
     // Off means hidden and idle: no D-Bus polling, no network.
     _applyVisibility() {
         this._stop();
-        if (this._settings.get_boolean('show-lyrics')) {
-            this._label.show();
-            this._tick();
-        }
+        if (this._settings.get_boolean('show-lyrics'))
+            this._tick(); // shows the label once there's text
     }
 
     _stop() {
@@ -95,12 +98,34 @@ export default class KaraokeExtension extends Extension {
         if (this._timeoutId)
             GLib.source_remove(this._timeoutId);
         this._timeoutId = 0;
-        this._label.hide();
+        this._box.hide();
     }
 
     // A changed cleaned-up title changes the track key, so lyrics are re-fetched on the next tick.
     _loadFilters() {
         this._filters = compileFilters(this._settings.get_strv('title-filters'));
+    }
+
+    _applyStyle() {
+        const bg = backgroundCss(this._settings.get_string('background-color'),
+            this._settings.get_int('background-opacity'));
+        const outline = this._settings.get_boolean('text-outline') ? 'text-shadow: 0 0 2px 2px rgba(0,0,0,0.8);' : '';
+        this._label.style = `color: white; font-size: 10px; font-family: monospace; ${outline}`;
+        this._box.style = `width: ${WIDTH}px; padding: 8px; border-radius: 8px; background-color: ${bg};`;
+
+        // ponytail: the blur is a plain rectangle; rounded blur needs a custom shader (as blur-my-shell does).
+        const radius = this._settings.get_int('blur-radius');
+        if (radius > 0) {
+            if (!this._blur) {
+                this._blur = new Shell.BlurEffect({mode: Shell.BlurMode.BACKGROUND});
+                this._box.add_effect(this._blur);
+            }
+            this._blur.radius = radius;
+        } else if (this._blur) {
+            this._box.remove_effect(this._blur);
+            this._blur = null;
+        }
+        this._place();
     }
 
     _place() {
@@ -110,9 +135,9 @@ export default class KaraokeExtension extends Extension {
         const corner = this._settings.get_string('corner');
         const dx = this._settings.get_int('x-offset');
         const dy = this._settings.get_int('y-offset');
-        const x = corner.endsWith('left') ? m.x + dx : m.x + m.width - WIDTH - dx;
-        const y = corner.startsWith('top') ? m.y + dy : m.y + m.height - this._label.height - dy;
-        this._label.set_position(x, y);
+        const x = corner.endsWith('left') ? m.x + dx : m.x + m.width - this._box.width - dx;
+        const y = corner.startsWith('top') ? m.y + dy : m.y + m.height - this._box.height - dy;
+        this._box.set_position(x, y);
     }
 
     // Runs one update, then schedules the next, so slow D-Bus or network calls never overlap.
@@ -121,9 +146,12 @@ export default class KaraokeExtension extends Extension {
         const cancellable = this._cancellable;
         try {
             const text = await this._render(cancellable);
-            if (!cancellable.is_cancelled() && this._label.text !== text) {
-                this._label.text = text;
-                this._place(); // bottom corners depend on the label's height
+            if (!cancellable.is_cancelled()) {
+                if (this._label.text !== text) {
+                    this._label.text = text;
+                    this._place(); // right and bottom corners depend on the label's size
+                }
+                this._box.visible = text !== ''; // no empty background box when nothing plays
             }
         } catch (e) {
             if (cancellable.is_cancelled() || isCancelled(e))

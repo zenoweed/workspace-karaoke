@@ -1,5 +1,11 @@
 // Pure helpers: no GNOME imports, so tests can run them with plain gjs.
 
+// "rgb(r,g,b)" (or any colour string whose first three numbers are r,g,b) + opacity % -> CSS rgba.
+export function backgroundCss(color, opacityPercent) {
+    const [r = 0, g = 0, b = 0] = (color.match(/\d+/g) ?? []).map(Number);
+    return `rgba(${r},${g},${b},${opacityPercent / 100})`;
+}
+
 // A plain word matches whole words only ("hd" leaves "Shadow" alone);
 // anything else is a case-insensitive regex. Invalid regexes are skipped.
 export function compileFilters(entries) {

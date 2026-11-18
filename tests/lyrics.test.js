@@ -1,6 +1,6 @@
 // Run: glib-compile-schemas src/workspace-karaoke@zenoweed.github.io/schemas && gjs -m tests/lyrics.test.js
 import Gio from 'gi://Gio';
-import {compileFilters, currentLines, parseLrc, parseTitle} from '../src/workspace-karaoke@zenoweed.github.io/lyrics.js';
+import {backgroundCss, compileFilters, currentLines, parseLrc, parseTitle} from '../src/workspace-karaoke@zenoweed.github.io/lyrics.js';
 
 function eq(a, b) {
     if (JSON.stringify(a) !== JSON.stringify(b))
@@ -29,5 +29,9 @@ const lrc = parseLrc('[ar: x]\n[00:01.00]one\n[00:05.50]two\n[01:00]three\n');
 eq(lrc, [[1, 'one'], [5.5, 'two'], [60, 'three']]);
 eq(currentLines(lrc, 0), '> one\n  two\n  three');
 eq(currentLines(lrc, 6), '  one\n> two\n  three');
+
+eq(backgroundCss('rgb(61,56,70)', 40), 'rgba(61,56,70,0.4)');
+eq(backgroundCss('rgba(43,37,37,0.3)', 0), 'rgba(43,37,37,0)'); // old saved value with alpha
+eq(backgroundCss('garbage', 100), 'rgba(0,0,0,1)');
 
 print('ok');

@@ -1,4 +1,5 @@
 import Adw from 'gi://Adw';
+import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
@@ -35,8 +36,57 @@ export default class KaraokePreferences extends ExtensionPreferences {
 
         const page = new Adw.PreferencesPage();
         page.add(group);
+        page.add(this._appearanceGroup(settings));
         page.add(this._filtersGroup(settings));
         window.add(page);
+    }
+
+    _appearanceGroup(settings) {
+        const KEY = 'background-color';
+        const group = new Adw.PreferencesGroup({title: 'Appearance'});
+
+        // Colour and opacity are separate: the GTK picker's swatches silently reset alpha to 100%.
+        const button = new Gtk.ColorDialogButton({
+            dialog: new Gtk.ColorDialog({with_alpha: false}),
+            valign: Gtk.Align.CENTER,
+        });
+        const sync = () => {
+            const rgba = new Gdk.RGBA();
+            if (rgba.parse(settings.get_string(KEY)) && !rgba.equal(button.rgba))
+                button.rgba = rgba;
+        };
+        sync();
+        button.connect('notify::rgba', () => {
+            settings.set_string(KEY, button.rgba.to_string());
+            // Picking a colour while the background is off should show it.
+            if (settings.get_int('background-opacity') === 0)
+                settings.set_int('background-opacity', 50);
+        });
+        settings.connect(`changed::${KEY}`, sync);
+
+        const row = new Adw.ActionRow({title: 'Background colour'});
+        row.add_suffix(button);
+        group.add(row);
+
+        const opacity = Adw.SpinRow.new_with_range(0, 100, 5);
+        opacity.title = 'Background opacity';
+        opacity.subtitle = 'Percent. 0 means no background.';
+        settings.bind('background-opacity', opacity, 'value', Gio.SettingsBindFlags.DEFAULT);
+        group.add(opacity);
+
+        const outline = new Adw.SwitchRow({
+            title: 'Text outline',
+            subtitle: 'A dark edge around the letters keeps them readable on light backgrounds.',
+        });
+        settings.bind('text-outline', outline, 'active', Gio.SettingsBindFlags.DEFAULT);
+        group.add(outline);
+
+        const blur = Adw.SpinRow.new_with_range(0, 100, 1);
+        blur.title = 'Blur';
+        blur.subtitle = 'Blurs whatever is behind the lyrics. 0 turns it off.';
+        settings.bind('blur-radius', blur, 'value', Gio.SettingsBindFlags.DEFAULT);
+        group.add(blur);
+        return group;
     }
 
     _filtersGroup(settings) {

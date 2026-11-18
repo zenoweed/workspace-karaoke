@@ -5,6 +5,24 @@
       <default>true</default>
       <summary>Show the lyrics overlay</summary>
     </key>
+    <key name="background-color" type="s">
+      <default>'rgb(0,0,0)'</default>
+      <summary>Background colour behind the lyrics, as rgb(r,g,b)</summary>
+    </key>
+    <key name="text-outline" type="b">
+      <default>true</default>
+      <summary>Dark outline around the text so it stays readable on light backgrounds</summary>
+    </key>
+    <key name="background-opacity" type="i">
+      <range min="0" max="100"/>
+      <default>35</default>
+      <summary>Background opacity in percent (0 = no background)</summary>
+    </key>
+    <key name="blur-radius" type="i">
+      <range min="0" max="100"/>
+      <default>20</default>
+      <summary>Blur strength behind the lyrics in pixels (0 = off)</summary>
+    </key>
     <key name="corner" type="s">
       <choices>
         <choice value="top-left"/>
