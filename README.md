@@ -50,3 +50,7 @@ gjs -m tests/lyrics.test.js
 ```sh
 gnome-extensions pack src/workspace-karaoke@zenoweed.github.io --extra-source=lyrics.js --schema=schemas/org.gnome.shell.extensions.workspace-karaoke.gschema.xml
 ```
+
+## License
+
+GPL-2.0-or-later. See [LICENSE](LICENSE).
