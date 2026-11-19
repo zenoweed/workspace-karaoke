@@ -6,7 +6,24 @@ Synced lyrics for whatever is playing, overlaid on the GNOME desktop.
 
 Works with any MPRIS media player (Firefox, Chrome, Spotify, …). Lyrics come from [lrclib.net](https://lrclib.net); the current track's artist and title are sent there to look them up. Nothing else to install or run.
 
-Turn lyrics on and off with the **Lyrics** button in Quick Settings (top-right menu). In the Extensions app → Workspace Karaoke → settings you can pick the corner and distance from the edges, and edit the words and regexes stripped from track titles before the lyrics lookup. Changes apply live.
+Turn lyrics on and off with the **Lyrics** button in Quick Settings (top-right menu).
+
+## Settings
+
+Open the Extensions app → Workspace Karaoke → settings. Every change applies immediately.
+
+![Settings window with Position, Appearance and Title cleanup sections](docs/settings.png)
+
+| Option | What it does | Default |
+| --- | --- | --- |
+| Corner | Screen corner the lyrics sit in | Top right |
+| Distance from side edge | Gap from the left or right edge, in pixels | 240 |
+| Distance from top or bottom edge | Gap from the top or bottom edge, in pixels | 60 |
+| Background colour | Colour of the panel behind the lyrics | Black |
+| Background opacity | How solid that panel is, in percent; 0 hides it | 35 |
+| Text outline | Dark edge around the letters, so lyrics stay readable on white windows | On |
+| Blur | Blurs whatever is behind the lyrics; 0 turns it off | 20 |
+| Title cleanup | Words and regexes stripped from track titles before the lyrics lookup. A plain word matches whole words only (`hd` leaves "Shadow" alone); anything else is a case-insensitive regex, e.g. `\(.*?\)` removes anything in brackets. | Brackets, "official", "video", "audio", "lyrics", "hd", "4k", "remastered", … |
 
 ## Install from source (GNOME 46)
 
