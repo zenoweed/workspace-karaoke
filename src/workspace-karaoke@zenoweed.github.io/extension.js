@@ -80,9 +80,22 @@ export default class KaraokeExtension extends Extension {
         Main.layoutManager.disconnect(this._monitorsId);
         this._settings.disconnect(this._settingsId);
         this._session.abort();
-        this._box.destroy();
-        this._box = this._label = this._session = this._cancellable = this._track = this._clock = this._settings = this._filters = this._blur = null;
-        this._timeoutId = this._monitorsId = this._settingsId = 0;
+        this._session = null;
+
+        this._label.destroy();
+        this._label = null;
+        this._box.destroy(); // also drops the blur effect
+        this._box = null;
+        this._blur = null;
+
+        this._settings = null;
+        this._cancellable = null;
+        this._track = null;
+        this._clock = null;
+        this._filters = null;
+        this._timeoutId = 0;
+        this._monitorsId = 0;
+        this._settingsId = 0;
     }
 
     // Off means hidden and idle: no D-Bus polling, no network.
